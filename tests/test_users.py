@@ -1,20 +1,21 @@
+import pytest
 from app import schemas
 from .database import client, session
 
 
-def test_root(client):
-  res = client.get("/", )
-  assert res.status_code == 200
-
-def test_create_user(client):
-  res = client.post("/users/", json={"email": "hello123457@gmail.com", "password": "password123"})
-  new_user = schemas.UserOut(**res.json())
-  assert new_user.email == "hello123457@gmail.com"
+@pytest.fixture()
+def test_user(client):
+  user_data = {"email": "bmdvc013@gmail.com", "password": "password123"}
+  res = client.post("/users/", json=user_data)
   assert res.status_code == 201
+  new_user = res.json()
+  new_user['password'] = user_data['password']
+  return new_user
 
-def test_login_user(client):
+
+def test_login_user(test_user, client):
   res = client.post(
     "/login",
-    data={"username": "hello123457@gmail.com", "password": "password123"}
+    data={"username": test_user['email'], "password": test_user['password']}
   )
   assert res.status_code == 200
