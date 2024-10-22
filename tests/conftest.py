@@ -1,5 +1,6 @@
 import os
 import pytest
+from jose import jwt
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -8,7 +9,7 @@ from app.main import app
 from app import schemas
 from app.database import get_db
 from app.database import Base
-
+from app.config import settings
 
 SQLALCHEMY_DATABASE_URL = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
 engine = create_engine(SQLALCHEMY_DATABASE_URL + "_test")
@@ -34,3 +35,12 @@ def client(session):
 
   app.dependency_overrides[get_db] = override_get_db
   yield TestClient(app)
+
+@pytest.fixture()
+def test_user(client):
+  user_data = {"email": "bmdvc013@gmail.com", "password": "password123"}
+  res = client.post("/users/", json=user_data)
+  assert res.status_code == 201
+  new_user = res.json()
+  new_user['password'] = user_data['password']
+  return new_user
